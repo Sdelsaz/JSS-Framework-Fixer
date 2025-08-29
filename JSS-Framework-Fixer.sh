@@ -66,6 +66,10 @@ else
 echo "User cancelled"
 exit 0
 fi
+if [[ $jssurl != *"https://"* ]]
+then 
+jssurl="https://$jssurl"
+fi
 }
 
 #Prompt to choose new or existing group
