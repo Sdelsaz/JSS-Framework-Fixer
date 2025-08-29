@@ -212,6 +212,44 @@ exit 0
 fi
 }
 
+redeploymentPrompt() {
+	
+# Create a command file (needed to close the dialog later if needed)
+commandFile="/var/tmp/dialogIndeterminate.txt"
+: > "$commandFile"
+
+/usr/local/bin/dialog \
+--title "JSS Framework Fixer" \
+--message "We're working on it! This can take a while depending on how many computers are in the Smart Computer Group" \
+--icon "$icon" \
+--alignment "left" \
+--small \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--button1text "Cancel" \
+--progress --indeterminate \
+--commandfile "$commandFile" &
+
+dialogPID=$!
+if [ $? != 0 ]; then
+echo "User cancelled"
+exit 0
+fi
+}
+	
+# End prompt
+donePrompt() {
+/usr/local/bin/dialog \
+--title "JSS Framework Fixer" \
+--message "We're done! The command the reinstall the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
+--icon "$icon" \
+--alignment "left" \
+--small \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--button1text "OK"
+}
+	
 #######################################################################################################
 # Bearer Token functions
 #######################################################################################################
@@ -325,15 +363,27 @@ else
 remediationPrompt
 
 if  [[ $remediationCheck == "Yes" ]]; then
+	
+#Show Progreess bar while the Jamf Management Framework is being redeployed on the computers
+redeploymentPrompt
 
 #Loop through the members of the SMart Computer Group and renew the Jamf Management Framework
-	
 for computer in $memberList; do
 	
 echo "Redeploying Jamf Management Framework on Computer with ID: $computer"
 curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v1/jamf-management-framework/redeploy/$computer" -H 'accept: application/json' -d ''
-
 done
+
+#Update the dialog before closing
+echo "progresstext: Finishing..." > "$commandFile"
+sleep 1
+
+#Close the dialog
+kill $dialogPID
+
+#Clean up
+rm /var/tmp/dialogIndeterminate.txt
 fi
+donePrompt
 fi
 exit 0
