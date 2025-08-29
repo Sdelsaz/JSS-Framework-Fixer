@@ -175,6 +175,8 @@ echo "User cancelled"
 exit 0
 fi
 }
+
+#Pormpt to indicate there are noi members in the Smart Computer Group
 noMembersPrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -191,7 +193,7 @@ exit 0
 fi
 }
 
-# Show number of devices in the Smart Computer Group and ask if we should remeidate
+#Show number of devices in the Smart Computer Group and ask if we should remeidate
 remediationPrompt() {
 remediationCheck=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -213,8 +215,7 @@ fi
 }
 
 redeploymentPrompt() {
-	
-# Create a command file (needed to close the dialog later if needed)
+#Create a command file (needed to close the dialog later if needed)
 commandFile="/var/tmp/dialogIndeterminate.txt"
 : > "$commandFile"
 
@@ -237,7 +238,7 @@ exit 0
 fi
 }
 	
-# End prompt
+#End prompt
 donePrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -359,7 +360,7 @@ if [ -z "$memberList" ]; then
 noMembersPrompt
 else
 
-# Show number of devioces in the Smart Computer Group and ask if we should remeidate
+#Show number of devioces in the Smart Computer Group and ask if we should remeidate
 remediationPrompt
 
 if  [[ $remediationCheck == "Yes" ]]; then
