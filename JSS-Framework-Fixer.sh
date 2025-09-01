@@ -41,7 +41,7 @@ fi
 #######################################################################################################
 # Prompt functions
 #######################################################################################################
-#Prompt for Credentoials
+#Prompt for Credentials
 credentialPrompt() {
 serverDetails=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -73,7 +73,7 @@ fi
 }
 
 #Prompt to choose new or existing group
-goupOptionPrompt() {
+groupOptionPrompt() {
 groupOptions=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
 --message "Would you like to create a Smart Computer Group to redeploy the Jamf Management Framework to?" \
@@ -297,7 +297,7 @@ fi
 checkTokenExpiration
 
 #Prompt to choose new or existing group
-goupOptionPrompt
+groupOptionPrompt
 
 #Check if a Smart Cmputer Group already exist
 if [[ "$groupSelection" == "I already have a Smart Computer Group" ]]; then
@@ -376,7 +376,7 @@ curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v1/jamf-ma
 done
 
 #Update the dialog before closing
-echo "progresstext: Finishing..." > "$commandFile"
+echo "progresstext: In Propgress..." > "$commandFile"
 sleep 1
 
 #Close the dialog
