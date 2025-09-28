@@ -381,7 +381,6 @@ done
 
 #Close the progress dialog
 pkill Dialog
-sleep 2
 
 #Clean up
 rm /var/tmp/dialogIndeterminate.txt
