@@ -360,7 +360,7 @@ if [ -z "$memberList" ]; then
 noMembersPrompt
 else
 
-#Show number of devioces in the Smart Computer Group and ask if we should remeidate
+#Show number of devices in the Smart Computer Group and ask if we should remeidate
 remediationPrompt
 
 if  [[ $remediationCheck == "Yes" ]]; then
@@ -373,11 +373,11 @@ for computer in $memberList; do
 	
 echo "Redeploying Jamf Management Framework on Computer with ID: $computer"
 curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v1/jamf-management-framework/redeploy/$computer" -H 'accept: application/json' -d ''
-done
 
-#Update the dialog before closing
-echo "progresstext: In Progress..." > "$commandFile"
+#Update the dialog
+echo "progresstext: "Redeploying Jamf Management Framework on Computer with ID: $computer > "$commandFile"
 sleep 1
+done
 
 #Close the progress dialog
 pkill Dialog
