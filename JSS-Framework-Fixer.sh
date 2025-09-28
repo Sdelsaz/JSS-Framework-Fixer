@@ -380,7 +380,8 @@ echo "progresstext: In Progress..." > "$commandFile"
 sleep 1
 
 #Close the dialog
-kill $dialogPID
+pkill Dialog
+sleep 2
 
 #Clean up
 rm /var/tmp/dialogIndeterminate.txt
