@@ -368,7 +368,7 @@ if  [[ $remediationCheck == "Yes" ]]; then
 #Show Progreess bar while the Jamf Management Framework is being redeployed on the computers
 redeploymentPrompt
 
-#Loop through the members of the SMart Computer Group and renew the Jamf Management Framework
+#Loop through the members of the Smart Computer Group and renew the Jamf Management Framework
 for computer in $memberList; do
 	
 echo "Redeploying Jamf Management Framework on Computer with ID: $computer"
@@ -376,7 +376,7 @@ curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v1/jamf-ma
 done
 
 #Update the dialog before closing
-echo "progresstext: In Propgress..." > "$commandFile"
+echo "progresstext: In Progress..." > "$commandFile"
 sleep 1
 
 #Close the dialog
