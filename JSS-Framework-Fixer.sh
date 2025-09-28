@@ -379,7 +379,7 @@ done
 echo "progresstext: In Progress..." > "$commandFile"
 sleep 1
 
-#Close the dialog
+#Close the progress dialog
 pkill Dialog
 sleep 2
 
