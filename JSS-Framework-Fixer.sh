@@ -21,7 +21,7 @@
 #
 ###########################################################################################################################
 #Create the logfile
-Logfile=/usr/local/JSS-Framework-Fixer.log
+Logfile=/var/log/JSS-Framework-Fixer.log
 touch $Logfile
 
 #Dialog variables
