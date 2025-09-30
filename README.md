@@ -6,6 +6,8 @@ A script to help re-deploy the Jamf Pro Framework to a Smart Computer Group. An 
 
 This script leverages the Jamf Pro API and is to be run on an administrator's mac, it is not meant to be deployed using Jamf Pro.  Prompts are used to gather the server details credentials for the API calls.
 
+Logs are written to /usr/local/JSS-Framework-Fixer.log
+
 This script uses Bart Reardon's swiftDialog for user dialogs:
 
 https://github.com/bartreardon/swiftDialog
