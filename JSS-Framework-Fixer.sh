@@ -20,22 +20,25 @@
 # Created by Sebastien Del Saz Alvarez on 29 August 2025
 #
 ###########################################################################################################################
+#Create the logfile
+Logfile=/usr/local/JSS-Framework-Fixer.log
+touch $Logfile
 
 #Dialog variables
 messageFont="size=18,name=HelveticaNeue"
 titleFont="weight=bold,size=30,name=HelveticaNeue-Bold"
-icon="https://i.imgur.com/79AYkzG.png"
+icon="https://github.com/Sdelsaz/JSS-Framework-Fixer/raw/main/images/icon1.png"
 
 #Check if Swift Dialog is installed. if not, Install it
-echo "Checking if SwiftDialog is installed"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checking if SwiftDialog is installed" >> $Logfile
 if [[ -e "/usr/local/bin/dialog" ]]
 then
-echo "SwiftDialog is already installed"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: SwiftDialog is already installed" >> $Logfile
 else
-echo "SwiftDialog Not installed, downloading and installing"
-/usr/bin/curl https://github.com/swiftDialog/swiftDialog/releases/download/v2.5.5/dialog-2.5.5-4802.pkg -L -o /tmp/dialog-2.5.5-4802.pkg 
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: SwiftDialog Not installed, downloading and installing" >> $Logfile
+/usr/bin/curl https://github.com/swiftDialog/swiftDialog/releases/download/v2.5.5/dialog-2.5.5-4802.pkg -L -o /tmp/dialog-2.5.5-4802.pkg >> $Logfile
 cd /tmp
-/usr/sbin/installer -pkg dialog-2.5.5-4802.pkg -target /
+/usr/sbin/installer -pkg dialog-2.5.5-4802.pkg -target / >> $Logfile
 fi
 
 #######################################################################################################
@@ -43,6 +46,7 @@ fi
 #######################################################################################################
 #Prompt for Credentials
 credentialPrompt() {
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Prompting for credentials and server url" >> $Logfile
 serverDetails=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
 --message "Please enter your Jamf Pro details below:" \
@@ -109,11 +113,51 @@ groupName=$(/usr/local/bin/dialog \
 --json)
 if [ $? == 0 ]
 then
-groupName=$(echo "$groupName" | awk -F '"' '{print $4}')
+groupName=$(echo "$groupName" | awk -F '"' '{print $4}' | tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
 echo "User cancelled"
 exit 0
 fi
+#Replace spaces with %20 for API call
+groupName2=$(echo $groupName | sed 's/ /%20/g')
+#Check to make sure a group with the provided name exists
+groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&page-size=100&sort=id%3Aasc&filter=name%3D%3D%22${groupName2}%22" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}")
+if [[ $(echo "$groupCheck" | jq -r '.totalCount') -eq 0 ]]; then
+echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: No group with name $groupName not found" >> $Logfile
+groupNotFound
+fi
+}
+
+#Prompt explaining the group was not found
+groupNotFound() {
+/usr/local/bin/dialog \
+--title "JSS Framework Fixer" \
+--message "Oops! We could not find a Smart Computer Group called ${groupName}" \
+--icon "$icon" \
+--overlayicon "caution" \
+--alignment "left" \
+--small \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--button1text "OK"
+
+groupNamePrompt
+}
+
+#Prompt explaining a grouo with the provided name already exists
+groupExists() {
+/usr/local/bin/dialog \
+--title "JSS Framework Fixer" \
+--message "Oops! It looks like there is already a Smart Computer Group called ${groupName}" \
+--icon "$icon" \
+--overlayicon "caution" \
+--alignment "left" \
+--small \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--button1text "OK"
+
+newGroupPrompt
 }
 
 #Prompt for number of days since last Inventory Update
@@ -136,7 +180,7 @@ echo "User cancelled"
 exit 0
 fi
 }
-	
+
 #Request the name of the Smart Computer Group to be created
 newGroupPrompt() {
 groupName=$(/usr/local/bin/dialog \
@@ -151,13 +195,21 @@ groupName=$(/usr/local/bin/dialog \
 --titlefont "$titleFont" \
 --json)
 if [ $? == 0 ]; then
-groupName=$(echo "$groupName" | awk -F '"' '{print $4}')
+groupName=$(echo "$groupName" | awk -F '"' '{print $4}'| tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
 echo "User cancelled"
 exit 0
 fi
+#Replace spaces with %20 for API call
+groupName2=$(echo $groupName | sed 's/ /%20/g')
+#Check to make sure a group with the provided name exists
+groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&page-size=100&sort=id%3Aasc&filter=name%3D%3D%22${groupName2}%22" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}")
+if [[ $(echo "$groupCheck" | jq -r '.totalCount') -eq 1 ]]; then
+echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: There is already a Smart Computer Group named $groupName" >> $Logfile
+groupExists 
+fi
 }
-	
+
 #Wait for the group to be created and replication to all nodes
 creationPrompt() {
 /usr/local/bin/dialog \
@@ -176,7 +228,7 @@ exit 0
 fi
 }
 
-#Pormpt to indicate there are noi members in the Smart Computer Group
+#Pormpt to indicate there are no members in the Smart Computer Group
 noMembersPrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -207,8 +259,10 @@ remediationCheck=$(/usr/local/bin/dialog \
 --titlefont "$titleFont" \
 --json)
 if [ $? == 2 ]; then
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Remediation choice: yes" >> $Logfile
 remediationCheck="Yes"
 else
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Remediation choice: No. Exiting." >> $Logfile
 echo "User cancelled"
 exit 0
 fi
@@ -237,7 +291,7 @@ echo "User cancelled"
 exit 0
 fi
 }
-	
+
 #End prompt
 donePrompt() {
 /usr/local/bin/dialog \
@@ -271,9 +325,9 @@ checkTokenExpiration() {
 nowEpochUTC=$(date -j -f "%Y-%m-%dT%T" "$(date -u +"%Y-%m-%dT%T")" +"%s")
 if [[ tokenExpirationEpoch -gt nowEpochUTC ]]
 then
-echo "INFO: Token valid until the following epoch time: " "$tokenExpirationEpoch"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token valid until the following epoch time: " "$tokenExpirationEpoch" >> $Logfile
 else
-echo "INFO: No valid token available, getting new token"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: No valid token available, getting new token" >> $Logfile
 
 getBearerToken
 fi
@@ -283,29 +337,30 @@ invalidateToken() {
 responseCode=$(curl -w "%{http_code}" -H "Authorization: Bearer ${bearerToken}" $jssurl/api/v1/auth/invalidate-token -X POST -s -o /dev/null)
 if [[ ${responseCode} == 204 ]]
 then
-echo "INFO: Token successfully invalidated"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token successfully invalidated" >> $Logfile
 bearerToken=""
 tokenExpirationEpoch="0"
 elif [[ ${responseCode} == 401 ]]
 then
-echo "INFO: Token already invalid"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token already invalid" >> $Logfile
 else
-echo "ERROR: An unknown error occurred invalidating the token"
+echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: An unknown error occurred invalidating the token" >> $Logfile
 fi
 }
+
 #Check for existing token and prompt for credentials if needed
 checkTokenExpiration
 
 #Prompt to choose new or existing group
 groupOptionPrompt
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Prompting to choose between new group of existing group" >> $Logfile
 
 #Check if a Smart Cmputer Group already exist
 if [[ "$groupSelection" == "I already have a Smart Computer Group" ]]; then
 	
 #Request the name of the existing Smart Computer Group
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Existing group workflow selected.  Prompting for existing group name" >> $Logfile
 groupNamePrompt
-#Replace spaces with %20 for API call
-groupName=$(echo $groupName | sed 's/ /%20/g')
 
 fi
 
@@ -314,66 +369,75 @@ if [[ "$groupSelection" == "Please create a Smart Computer Group" ]]; then
 	
 #Prompt for number of days since last Inventory Update
 daysPrompt
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: New group workflow selected. Prompting for number of days since last Inventory Update" >> $Logfile
 
 #Request the name of the Smart Computer Group to be created
 newGroupPrompt
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Prompting for new group name" >> $Logfile
 
-#Create the new Smart Cmputer Group
-read -r -d '' XML_PAYLOAD << EOM
-<computer_group>
-  <name>${groupName}</name>
-  <is_smart>true</is_smart>
-  <site><name>None</name></site>
-  <criteria>
-    <criterion>
-      <name>Last Inventory Update</name>
-      <priority>0</priority>
-      <and_or>and</and_or>
-      <search_type>more than x days ago</search_type>
-      <value>${days}</value>
-    </criterion>
-  </criteria>
-</computer_group>
+# Create the JSON payload for the smart group
+read -r -d '' JSON_PAYLOAD << EOM
+{
+  "name": "${groupName}",
+  "criteria": [
+    {
+      "name": "Last Inventory Update",
+      "priority": 0,
+      "andOr": "and",
+      "searchType": "more than x days ago",
+      "value": "${days}",
+      "openingParen": false,
+      "closingParen": false
+    }
+  ],
+  "siteId": "-1"
+}
+
 EOM
+  
+# Create the Smart Computer Group
 
-#Create the Smart Computer Group
-curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/JSSResource/computergroups/id/0"  -H "Content-Type: application/xml" -d "$XML_PAYLOAD"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Creating group called $groupName" >> "$Logfile"
+curl -X 'POST' \
+  "$jssurl/api/v2/computer-groups/smart-groups" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}" -H "Content-Type: application/json" -d "${JSON_PAYLOAD}" >> $Logfile
 
 #Wait for replication to all server nodes
 creationPrompt
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Waiting for replication" >> $Logfile
+
 #Replace spaces with %20 for API call
-groupName=$(echo $groupName | sed 's/ /%20/g')
+groupName2=$(echo $groupName | sed 's/ /%20/g')
 
 fi
 
 #Get the members of the Smart Computer Group
-memberList=$(curl -X 'GET' -H "Authorization: Bearer ${bearerToken}" "$jssurl/JSSResource/computergroups/name/$groupName" -H "accept: application/xml" |  xmllint --format - |  grep -A3 "<computer>" | awk -F '[<>]' '/id/{print $3}')
-
+memberList=$(curl -X 'GET' -H "Authorization: Bearer ${bearerToken}" "$jssurl/JSSResource/computergroups/name/$groupName2" -H "accept: application/xml" |  xmllint --format - |  grep -A3 "<computer>" | awk -F '[<>]' '/id/{print $3}')
+  
 #Count the members
 memberCount="0"
-for item in $memberList; do
-memberCount=$(( memberCount +1 ))
-done
-	
+  for item in $memberList; do
+    memberCount=$(( memberCount +1 ))
+  done
+  
 #Prompt explaining no computers were found
-if [ -z "$memberList" ]; then
-noMembersPrompt
-else
+  if [ -z "$memberList" ]; then
+    noMembersPrompt
+  else
 
 #Show number of devices in the Smart Computer Group and ask if we should remeidate
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checking if remediation is desired" >> $Logfile
 remediationPrompt
 
 if  [[ $remediationCheck == "Yes" ]]; then
-	
+
 #Show Progreess bar while the Jamf Management Framework is being redeployed on the computers
 redeploymentPrompt
 
 #Loop through the members of the Smart Computer Group and renew the Jamf Management Framework
 for computer in $memberList; do
 	
-echo "Redeploying Jamf Management Framework on Computer with ID: $computer"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Redeploying Jamf Management Framework on Computer with ID: $computer" >> $Logfile
 curl -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v1/jamf-management-framework/redeploy/$computer" -H 'accept: application/json' -d ''
-
 #Update the dialog
 echo "progresstext: "Redeploying Jamf Management Framework on Computer with ID: $computer > "$commandFile"
 sleep 1
@@ -383,8 +447,12 @@ done
 pkill Dialog
 
 #Clean up
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Cleaning up ..." >> $Logfile
 rm /var/tmp/dialogIndeterminate.txt
 fi
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Done!
+###############################################################################################################
+" >> $Logfile
 donePrompt
 fi
 exit 0
