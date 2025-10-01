@@ -76,6 +76,20 @@ jssurl="https://$jssurl"
 fi
 }
 
+#Prompt explaining there was an issue with the server details/credentials
+invalidCredentialsPrompt() {
+  /usr/local/bin/dialog \
+  --title "JSS Framework Fixer" \
+  --message "Oops! We were unable to validate the provided URL or credentials. Please make sure the server is reachable and that the server URL and credentials are correct." \
+  --icon "$icon" \
+  --overlayicon "caution" \
+  --alignment "left" \
+  --small \
+  --messagefont "$messageFont" \
+  --titlefont "$titleFont" \
+  --button1text "OK"
+}
+
 #Prompt to choose new or existing group
 groupOptionPrompt() {
 groupOptions=$(/usr/local/bin/dialog \
@@ -123,7 +137,7 @@ groupName2=$(echo $groupName | sed 's/ /%20/g')
 #Check to make sure a group with the provided name exists
 groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&page-size=100&sort=id%3Aasc&filter=name%3D%3D%22${groupName2}%22" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}")
 if [[ $(echo "$groupCheck" | jq -r '.totalCount') -eq 0 ]]; then
-echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: No group with name $groupName not found" >> $Logfile
+echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: No group with name $groupName found" >> $Logfile
 groupNotFound
 fi
 }
@@ -304,7 +318,7 @@ donePrompt() {
 --titlefont "$titleFont" \
 --button1text "OK"
 }
-	
+
 #######################################################################################################
 # Bearer Token functions
 #######################################################################################################
@@ -327,8 +341,8 @@ if [[ tokenExpirationEpoch -gt nowEpochUTC ]]
 then
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token valid until the following epoch time: " "$tokenExpirationEpoch" >> $Logfile
 else
-echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: No valid token available, getting new token" >> $Logfile
-
+echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Unable to validate server details/credentials" >> $Logfile
+invalidCredentialsPrompt
 getBearerToken
 fi
 }
@@ -348,8 +362,10 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: An unknown error occurred invalidating
 fi
 }
 
-#Check for existing token and prompt for credentials if needed
-checkTokenExpiration
+#######################################################################################################
+
+#Prompt for credentials
+getBearerToken
 
 #Prompt to choose new or existing group
 groupOptionPrompt
