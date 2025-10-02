@@ -80,7 +80,7 @@ fi
 invalidCredentialsPrompt() {
   /usr/local/bin/dialog \
   --title "JSS Framework Fixer" \
-  --message "Oops! We were unable to validate the provided URL or credentials. Please make sure the server is reachable and that the server URL and credentials are correct." \
+  --message "Oops! We were unable to validate the provided URL or credentials. Please make sure that the server is reachable and that the server URL and credentials are correct." \
   --icon "$icon" \
   --overlayicon "caution" \
   --alignment "left" \
