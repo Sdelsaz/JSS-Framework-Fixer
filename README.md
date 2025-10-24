@@ -19,3 +19,19 @@ https://github.com/bartreardon/swiftDialog
 ![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/5.png?raw=true)
 
 ![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/6.png?raw=true)
+
+
+## Requirements:
+
+- Jamf Pro 10.36 or later
+- A valid MDM profile and network connection on the target computer
+- The following privileges in Jamf Pro:
+
+Jamf Pro Server Objects:
+Smart Computer Groups: Create, Read
+
+Jamf Pro Server Settings:
+Check-in: Read
+
+Jamf Pro Server Actions:
+Send Computer Remote Command to Install Package
