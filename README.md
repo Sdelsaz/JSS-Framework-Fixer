@@ -24,7 +24,7 @@ https://github.com/bartreardon/swiftDialog
 ## Requirements:
 
 - Jamf Pro 10.36 or later
-- local administrtor privileges to run the script as root/use sudo
+- local administrator privileges to run the script as root/use sudo
 - A valid MDM profile and network connection on the target computer
 - The following privileges in Jamf Pro:
 
