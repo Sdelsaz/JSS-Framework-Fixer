@@ -141,6 +141,7 @@ then
 groupSelection=$(echo $groupOptions | awk -F '"' '{print $4}')
 else
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 }
@@ -163,6 +164,7 @@ then
 groupName=$(echo "$groupName" | awk -F '"' '{print $4}' | tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 #Replace spaces with %20 for API call
@@ -176,6 +178,7 @@ groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&p
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Could not check if a group called $groupName exists" >> $Logfile
 errorPrompt
+invalidateToken
 exit 1
 fi
 if [[ $(echo "$groupCheck" | jq -r '.totalCount') -eq 0 ]]; then
@@ -235,6 +238,7 @@ if [ $? == 0 ]; then
 days=$(echo $days | awk -F '"' '{print $4}')
 else
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 }
@@ -256,6 +260,7 @@ if [ $? == 0 ]; then
 groupName=$(echo "$groupName" | awk -F '"' '{print $4}'| tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 #Replace spaces with %20 for API call
@@ -268,12 +273,13 @@ groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&p
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Could not check if a group called $groupName already exists" >> $Logfile
 errorPrompt
+invalidateToken
 exit 1
 fi
 
 if [[ $(echo "$groupCheck" | jq -r '.totalCount') -eq 1 ]]; then
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: There is already a Smart Computer Group named $groupName" >> $Logfile
-groupExists 
+groupExists
 fi
 }
 
@@ -291,6 +297,7 @@ creationPrompt() {
 --button1text "Cancel"
 if [ $? == 0 ]; then
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 }
@@ -308,8 +315,10 @@ noMembersPrompt() {
 --button1text "OK"
 if [ $? != 0 ]; then
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
+invalidateToken
 }
 
 #Show number of devices in the Smart Computer Group and ask if we should remeidate
@@ -330,7 +339,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Remediation choice: yes" >> $Logfile
 remediationCheck="Yes"
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Remediation choice: No. Exiting." >> $Logfile
-echo "User cancelled"
+invalidateToken
 exit 0
 fi
 }
@@ -355,6 +364,7 @@ commandFile="/var/tmp/dialogIndeterminate.txt"
 dialogPID=$!
 if [ $? != 0 ]; then
 echo "User cancelled"
+invalidateToken
 exit 0
 fi
 }
@@ -371,6 +381,7 @@ errorPrompt() {
 --titlefont "$titleFont" \
 --button1text "OK"
 if [ $? != 0 ]; then
+invalidateToken
 exit 1
 fi
 }
@@ -492,6 +503,7 @@ echo "done"
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Group creation failed" >> $Logfile
 errorPrompt
+invalidateToken
 exit 1
 fi
 
@@ -547,9 +559,8 @@ pkill Dialog
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Cleaning up ..." >> $Logfile
 rm /var/tmp/dialogIndeterminate.txt
 fi
-echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Done!
-###############################################################################################################
-" >> $Logfile
+invalidateToken
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Done!" >> $Logfile
 donePrompt
 fi
 exit 0
