@@ -33,7 +33,7 @@ http_code=$(curl -s -o /dev/null -w "%{http_code}" "$@")
 local url="${!#}"
   
 if [[ $http_code =~ ^(200|201|202|204)$ ]]; then
-echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Command successfully sent" >> "$Logfile"
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Command successfully sent: HTTP code: $http_code" >> "$Logfile"
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Command failed with HTTP error $http_code" >> "$Logfile"
 case $http_code in
@@ -77,15 +77,54 @@ fi
 #######################################################################################################
 # Prompt functions
 #######################################################################################################
-#Prompt for Credentials
+#Prompt to choose Authentication Method
+authMethodPrompt() {
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Asking to select an authentication method" >> $Logfile
+  
+  AuthMethod=$(/usr/local/bin/dialog \
+--title "JSS Framework Fixer" \
+--message "Hi!  
+
+How would you like to authenticate?" \
+--radio "groupSelection" \
+--selecttitle "Please select an option",radio --selectvalues "User Account & Password, API Client & Secret" \
+--icon "$icon" \
+--alignment "left" \
+--button2 \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--infobuttontext "Required Privileges" \
+--infobuttonaction "https://github.com/Sdelsaz/JSS-Framework-Fixer?tab=readme-ov-file#requirements" \
+--small)
+if [ $? -ne 0 ]
+then
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
+invalidateToken
+exit 0
+fi
+authSelection=$(echo $AuthMethod | awk -F '"' '{print $4}')
+if [[ $authSelection == "User Account & Password" ]]
+then
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Selected authentication method: User Account & Password" >> $Logfile
+userNameLabel="User Name"
+passwordLabel="Password"
+authMethod="usercreds"
+else
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Selected authentication method: API Client & Secret" >> $Logfile
+userNameLabel="Client ID"
+passwordLabel="Client Secret"
+authMethod="clientsecret"
+fi
+}
+#Prompt for User Account and Password
 credentialPrompt() {
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Prompting for credentials and server url" >> $Logfile
 serverDetails=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
 --message "Please enter your Jamf Pro details below:" \
 --textfield "Jamf Pro URL","required" : true \
---textfield "Username",required : true \
---textfield "Password","secure : true,required : true" \
+--textfield "$userNameLabel",required : true \
+--textfield "$passwordLabel","secure : true,required : true" \
 --icon "$icon" \
 --alignment "left" \
 --small \
@@ -93,14 +132,13 @@ serverDetails=$(/usr/local/bin/dialog \
 --messagefont "$messageFont" \
 --titlefont "$titleFont" \
 --json)
-
 if [ $? == 0 ]
 then
 jssurl=$(echo "$serverDetails" | /usr/bin/plutil -extract "Jamf Pro URL" xml1 -o - - | xmllint --xpath "string(//string)" -)
-userName=$(echo "$serverDetails" | /usr/bin/plutil -extract "Username" xml1 -o - - | xmllint --xpath "string(//string)" -)
-APIpassword=$(echo "$serverDetails" | /usr/bin/plutil -extract "Password" xml1 -o - - | xmllint --xpath "string(//string)" -)
+userName=$(echo "$serverDetails" | /usr/bin/plutil -extract "$userNameLabel" xml1 -o - - | xmllint --xpath "string(//string)" -)
+APIpassword=$(echo "$serverDetails" | /usr/bin/plutil -extract "$passwordLabel" xml1 -o - - | xmllint --xpath "string(//string)" -)
 else
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 exit 0
 fi
 if [[ $jssurl != *"https://"* ]]
@@ -112,15 +150,15 @@ fi
 #Prompt explaining there was an issue with the server details/credentials
 invalidCredentialsPrompt() {
   /usr/local/bin/dialog \
-  --title "JSS Framework Fixer" \
-  --message "Oops! We were unable to validate the provided URL or credentials. Please make sure that the server is reachable and that the server URL and credentials are correct." \
-  --icon "$icon" \
-  --overlayicon "caution" \
-  --alignment "left" \
-  --small \
-  --messagefont "$messageFont" \
-  --titlefont "$titleFont" \
-  --button1text "OK"
+--title "JSS Framework Fixer" \
+--message "Oops! We were unable to validate the provided URL or credentials. Please make sure that the server is reachable and that the server URL and credentials are correct." \
+--icon "$icon" \
+--overlayicon "caution" \
+--alignment "left" \
+--small \
+--messagefont "$messageFont" \
+--titlefont "$titleFont" \
+--button1text "OK"
 }
 
 #Prompt to choose new or existing group
@@ -140,7 +178,7 @@ if [ $? == 0 ]
 then
 groupSelection=$(echo $groupOptions | awk -F '"' '{print $4}')
 else
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -150,7 +188,7 @@ fi
 groupNamePrompt() {
 groupName=$(/usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
---message "Please enter the name of the Smart Computer Group. Watch out for typos :-) " \
+--message "Please enter the name of the Smart Computer Group. Watch out for typos!" \
 --textfield "Group Name" \
 --icon "$icon" \
 --alignment "left" \
@@ -163,7 +201,7 @@ if [ $? == 0 ]
 then
 groupName=$(echo "$groupName" | awk -F '"' '{print $4}' | tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -237,7 +275,7 @@ days=$(/usr/local/bin/dialog \
 if [ $? == 0 ]; then
 days=$(echo $days | awk -F '"' '{print $4}')
 else
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -259,7 +297,7 @@ groupName=$(/usr/local/bin/dialog \
 if [ $? == 0 ]; then
 groupName=$(echo "$groupName" | awk -F '"' '{print $4}'| tr -d '\r\n' | sed 's/[^[:print:]]//g')
 else
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -296,7 +334,7 @@ creationPrompt() {
 --titlefont "$titleFont" \
 --button1text "Cancel"
 if [ $? == 0 ]; then
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -314,7 +352,7 @@ noMembersPrompt() {
 --titlefont "$titleFont" \
 --button1text "OK"
 if [ $? != 0 ]; then
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -363,7 +401,7 @@ commandFile="/var/tmp/dialogIndeterminate.txt"
 
 dialogPID=$!
 if [ $? != 0 ]; then
-echo "User cancelled"
+echo "$(date '+%Y-%m-%d %H:%M:%S') WARNING: User Cancelled" >> $Logfile
 invalidateToken
 exit 0
 fi
@@ -390,7 +428,9 @@ fi
 donePrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
---message "We're done! The command the reinstall the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
+--message "We're done!  
+
+The command the redeploy the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
 --icon "$icon" \
 --alignment "left" \
 --small \
@@ -408,15 +448,28 @@ bearerToken=""
 tokenExpirationEpoch="0"
 
 getBearerToken() {
-credentialPrompt
+if [[ $authMethod == "usercreds" ]]; then
 response=$(curl -s -u "$userName":"$APIpassword" "$jssurl"/api/v1/auth/token -X POST)
 bearerToken=$(echo "$response" | plutil -extract token raw -)
 tokenExpiration=$(echo "$response" | plutil -extract expires raw - | awk -F . '{print $1}')
 tokenExpirationEpoch=$(date -j -f "%Y-%m-%dT%T" "$tokenExpiration" +"%s")
-checkTokenExpiration
+checkTokenExpirationreprompt
+fi
+if [[ $authMethod == "clientsecret" ]]; then
+response=$(curl --silent --location --request POST "$jssurl/api/oauth/token" \
+    --header "Content-Type: application/x-www-form-urlencoded" \
+    --data-urlencode "client_id=${userName}" \
+    --data-urlencode "grant_type=client_credentials" \
+    --data-urlencode "client_secret=${APIpassword}")
+bearerToken=$(echo "$response" | plutil -extract access_token raw -)
+tokenExpiration=$(echo "$response" | plutil -extract expires_in raw -)
+nowEpochUTC=$(date -j -f "%Y-%m-%dT%T" "$(date -u +"%Y-%m-%dT%T")" +"%s")
+tokenExpirationEpoch=$(($nowEpochUTC + $tokenExpiration - 1))
+checkTokenExpirationreprompt
+fi
 }
 
-checkTokenExpiration() {
+checkTokenExpirationreprompt() {
 nowEpochUTC=$(date -j -f "%Y-%m-%dT%T" "$(date -u +"%Y-%m-%dT%T")" +"%s")
 if [[ tokenExpirationEpoch -gt nowEpochUTC ]]
 then
@@ -424,6 +477,18 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token valid until the following epoch t
 else
 echo "$(date '+%Y-%m-%d %H:%M:%S') ERROR: Unable to validate server details/credentials" >> $Logfile
 invalidCredentialsPrompt
+credentialPrompt
+getBearerToken
+fi
+}
+  
+checkTokenExpiration() {
+nowEpochUTC=$(date -j -f "%Y-%m-%dT%T" "$(date -u +"%Y-%m-%dT%T")" +"%s")
+if [[ tokenExpirationEpoch -gt nowEpochUTC ]]
+then
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Token valid until the following epoch time: " "$tokenExpirationEpoch" >> $Logfile
+else
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: No Token available. Getting new token." >> $Logfile
 getBearerToken
 fi
 }
@@ -444,6 +509,11 @@ fi
 }
 
 #######################################################################################################
+#Prompt for authentication method
+authMethodPrompt
+
+#Prompt for credentials
+credentialPrompt
 
 #Prompt for credentials
 getBearerToken
@@ -461,7 +531,7 @@ groupNamePrompt
 
 fi
 
-#Check if we need to create a Smart Cmputer Group 
+#Check if we need to create a Smart Computer Group 
 if [[ "$groupSelection" == "Please create a Smart Computer Group" ]]; then
 	
 #Prompt for number of days since last Inventory Update
@@ -511,6 +581,9 @@ fi
 creationPrompt
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Waiting for replication" >> $Logfile
 
+#Check Token expiration
+checkTokenExpiration
+
 #Replace spaces with %20 for API call
 groupName2=$(echo $groupName | sed 's/ /%20/g')
 
@@ -519,7 +592,7 @@ fi
 #Get the members of the Smart Computer Group
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checking members of the group" >> $Logfile
 memberList=$(curl -X 'GET' -H "Authorization: Bearer ${bearerToken}" "$jssurl/JSSResource/computergroups/name/$groupName2" -H "accept: application/xml" |  xmllint --format - |  grep -A3 "<computer>" | awk -F '[<>]' '/id/{print $3}')
-  
+
 #Count the members
 memberCount="0"
 for item in $memberList; do
@@ -532,7 +605,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: There are 0 members in the group" >> $L
 noMembersPrompt
 else
 
-#Show number of devices in the Smart Computer Group and ask if we should remeidate
+#Show number of devices in the Smart Computer Group and ask if we should remedidate
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: There are $memberCount members in the group" >> $Logfile
 echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checking if remediation is desired" >> $Logfile
 remediationPrompt
@@ -550,6 +623,7 @@ checkResponse -X 'POST' -H "Authorization: Bearer ${bearerToken}" "$jssurl/api/v
 #Update the dialog
 echo "progresstext: "Redeploying Jamf Management Framework on Computer with ID: $computer > "$commandFile"
 sleep 1
+checkTokenExpiration
 done
 
 #Close the progress dialog
