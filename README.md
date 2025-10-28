@@ -12,7 +12,7 @@ This script uses Bart Reardon's swiftDialog for user dialogs:
 
 https://github.com/bartreardon/swiftDialog
 
-![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/1.png?raw=true)
+![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/01.png?raw=true)
 
 ![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/3.png?raw=true)
 
