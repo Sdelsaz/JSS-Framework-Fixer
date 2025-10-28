@@ -430,7 +430,7 @@ donePrompt() {
 --title "JSS Framework Fixer" \
 --message "We're done!  
 
-The command the redeploy the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
+The command the redeploy the Jamf Management Framework has been sent to all members of the Smart Computer Group." \
 --icon "$icon" \
 --alignment "left" \
 --small \
