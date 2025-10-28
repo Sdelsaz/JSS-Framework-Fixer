@@ -18,7 +18,7 @@ https://github.com/bartreardon/swiftDialog
 
 ![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/5.png?raw=true)
 
-![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/6.png?raw=true)
+![alt text](https://github.com/Sdelsaz/JSS-Framework-Fixer/blob/main/images/7.png?raw=true)
 
 
 ## Note:
