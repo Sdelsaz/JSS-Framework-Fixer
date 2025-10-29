@@ -2,7 +2,7 @@
 
 # JSS Framework Fixer
 
-A script to help re-deploy the Jamf Pro Framework to a Smart Computer Group. An existing Smart Computer Group can be can used or a new one can be created.  The New Smart Computer Group will use the number of days since the last inventory update as criteria. A prompt will ask for the number of days to use for the criteria. 
+A script to help re-deploy the Jamf Pro Framework to a Smart Computer Group. An existing Smart Computer Group can be can used or a new one can be created.  The new Smart Computer Group will use the number of days since the last inventory update as criteria. A prompt will ask for the number of days to use for the criteria. 
 
 This script leverages the Jamf Pro API and is to be run on an administrator's mac, it is not meant to be deployed using Jamf Pro.  The script must be run as root. Prompts are used to gather the server details and credentials for the API calls.  A Jamf Pro Username/password or an API Client/Secret can be used to generate the token.
 
@@ -23,7 +23,7 @@ https://github.com/bartreardon/swiftDialog
 
 ## Note:
 
-Note: When reinstalling the Jamf management framework via this endpoint, Jamf Pro will clear or retain information for that computer based on the global re-enrollment settings you have configured. In addition, any policies scoped to the computer with a trigger of "enrollment complete" will be executed again. For more information, see Re-enrollment Settings in the [Jamf Pro Documentation](https://learn.jamf.com/en-US/bundle/jamf-pro-documentation-current/page/Re-enrollment_Settings.html).
+When reinstalling the Jamf management framework via this endpoint, Jamf Pro will clear or retain information for that computer based on the global re-enrollment settings you have configured. In addition, any policies scoped to the computer with a trigger of "enrollment complete" will be executed again. For more information, see Re-enrollment Settings in the [Jamf Pro Documentation](https://learn.jamf.com/en-US/bundle/jamf-pro-documentation-current/page/Re-enrollment_Settings.html).
 
 
 ## Requirements:
