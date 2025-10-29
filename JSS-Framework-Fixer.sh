@@ -304,7 +304,7 @@ fi
 #Replace spaces with %20 for API call
 groupName2=$(echo $groupName | sed 's/ /%20/g')
 #Check to make sure a group with the provided name does not already exists
-echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checkin if a group called $groupName already exists" >> $Logfile
+echo "$(date '+%Y-%m-%d %H:%M:%S') INFO: Checking if a group called $groupName already exists" >> $Logfile
 groupCheck=$(checkResponse -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&page-size=100&sort=id%3Aasc&filter=name%3D%3D%22${groupName2}%22" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}")
 if [[ $groupCheck =~ ^(200|201|202|204)$ ]]; then
 groupCheck=$(curl -X 'GET' "$jssurl/api/v2/computer-groups/smart-groups?page=0&page-size=100&sort=id%3Aasc&filter=name%3D%3D%22${groupName2}%22" -H "accept: application/json" -H "Authorization: Bearer ${bearerToken}")
