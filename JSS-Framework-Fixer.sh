@@ -339,7 +339,7 @@ exit 0
 fi
 }
 
-#Pormpt to indicate there are no members in the Smart Computer Group
+#Prompt to indicate there are no members in the Smart Computer Group
 noMembersPrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
@@ -427,7 +427,7 @@ fi
 donePrompt() {
 /usr/local/bin/dialog \
 --title "JSS Framework Fixer" \
---message "We're done! The command the redeploy the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
+--message "We're done! The command to redeploy the Jamf Management Framework has been deployed to all members of the Smart Computer Group." \
 --icon "$icon" \
 --alignment "left" \
 --small \
